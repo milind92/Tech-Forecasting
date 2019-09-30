@@ -1,0 +1,232 @@
+LOAD CSV WITH HEADERS FROM "file:/V1HoldoutSample.csv" AS line
+//FIELDTERMINATOR '\t'
+WITH line WHERE line.StartofTenureAddress1 IS NOT NULL
+
+MERGE(case:Cases {name:line.Case,link:line.Link})
+MERGE(company:Company{name:line.CompanyNamesReconciled,number:line.CompanyNumber,type:line.CompanyType,status:line.CompanyStatus,incorporation:line.IncorporationDate,dissolution:line.DissolutionDate,companypreviousnames:line.CompanyPreviousNames,previousnamesnumber:line.NumberofPreviousNames,changeinregisteredaddress:line.ChangeInRegisteredAddress,previousaddressnumber:line.NumberofPreviousAddresses,executivenumber:line.TotalNumberofExecutives,industrycode1:line.IndustryCode1,description1:line.DescriptionofIndustryCode1,industrycode2:line.IndustryCode2,description2:line.DescriptionofIndustryCode2,industrycode3:line.IndustryCode3,description3:line.DescriptionofIndustryCode3,industrycode4:line.IndustryCode4,description4:line.DescriptionofIndustryCode4,industrycode5:line.IndustryCode5,description5:line.DescriptionofIndustryCode5,industrycode6:line.IndustryCode6,description6:line.DescriptionofIndustryCode6,industrycode7:line.IndustryCode7,description8:line.DescriptionofIndustryCode8,industrycode9:line.IndustryCode9,description9:line.DescriptionofIndustryCode9,industrycode10:line.IndustryCode10,description10:line.DescriptionofIndustryCode10,dateofreportingcash:line.DateofReportingCashatBank,latestcashatbank:line.LatestFinancialsCashatBank,previousdateofreportingcash:line.PreviousYearDateofReportingCashatBank,previouscashatbank:line.PreviousFinancialsCashatBank,dateofreportingcurrentassets:line.DateofReportingCurrentAssets,latestcurrentassets:line.LatestFinancialsCurrentAssets,previousdateofreportingcurrentassets:line.PreviousYearDateofReportingCurrentAssets,previouscurrentassets:line.PreviousFinancialsCurrentAssets,dateofreportingcurrentliabilities:line.DateofReportingCurrentLiabilities,latestcurrentliabilities:line.LatestFinancialsCurrentLiabilities,previousdateofreportingcurrentliabilities:line.PreviousYearDateofReportingCurrentLiabilities,previouscurrentliabilities:line.PreviousFinancialsCurrentLiabilities,dateofreportingfixedassets:line.DateofReportingFixedAssets,latestfixedassets:line.LatestFinancialsFixedAssets,previousdateofreportingfixedassets:line.PreviousYearDateofReportingFixedAssets,previousfixedassets:line.PreviousFinancialsFixedAssets})
+MERGE(registeredaddress:CompanyAddress{address:line.RegisteredAddress,postalcodes:line.PostalCodes})
+MERGE(case)-[:COMPANY]->(company)-[:COMPANYADDRESS]->(registeredaddress)
+
+FOREACH (ignoreMe IN CASE WHEN line.ChangeInRegisteredAddress="Yes" AND toInteger(line.NumberofPreviousNames)=0 THEN [1] ELSE [] END|
+FOREACH (ignoreMe IN CASE WHEN line.PrevAddress1 <> "NA" THEN [1] ELSE [] END|
+MERGE (address1:Address{address:line.PrevAddress1,starttenure:line.StartofTenureAddress1,endtenure:line.EndofTenureAddress1})
+MERGE (company)-[:CHANGEINREGISTEREDADDRESS]->(address1)
+)
+FOREACH (ignoreMe IN CASE WHEN line.PrevAddress2 <> "NA" THEN [1] ELSE [] END|
+MERGE (address2:Address{address:line.PrevAddress2,starttenure:line.StartofTenureAddress2,endtenure:line.EndofTenureAddress2})
+MERGE (company)-[:CHANGEINREGISTEREDADDRESS]->(address2)
+)
+FOREACH (ignoreMe IN CASE WHEN line.PrevAddress3 <> "NA" THEN [1] ELSE [] END|
+MERGE (address3:Address{address:line.PrevAddress3,starttenure:line.StartofTenureAddress3,endtenure:line.EndofTenureAddress3})
+MERGE (company)-[:CHANGEINREGISTEREDADDRESS]->(address3)
+)
+)
+FOREACH (ignoreMe IN CASE WHEN line.ChangeInRegisteredAddress="Yes" AND toInteger(line.NumberofPreviousNames)>0 THEN [1] ELSE [] END|
+FOREACH (ignoreMe IN CASE WHEN line.PrevAddress1 <> "NA" THEN [1] ELSE [] END|
+MERGE (previousaddress1:Address{address:line.PrevAddress1,starttenure:line.StartofTenureAddress1,endtenure:line.EndofTenureAddress1})
+MERGE (company)-[:PREVIOUSADDRESS]->(previousaddress1)
+)
+FOREACH (ignoreMe IN CASE WHEN line.PrevAddress2 <> "NA" THEN [1] ELSE [] END|
+MERGE (previousaddress2:Address{address:line.PrevAddress2,starttenure:line.StartofTenureAddress2,endtenure:line.EndofTenureAddress2})
+MERGE (company)-[:PREVIOUSADDRESS]->(previousaddress2)
+)
+FOREACH (ignoreMe IN CASE WHEN line.PrevAddress3 <> "NA" THEN [1] ELSE [] END|
+MERGE (previousaddress3:Address{address:line.PrevAddress3,starttenure:line.StartofTenureAddress3,endtenure:line.EndofTenureAddress3})
+MERGE (company)-[:PREVIOUSADDRESS]->(previousaddress3)
+)
+)
+FOREACH (ignoreMe IN CASE WHEN line.ChangeInRegisteredAddress= "Yes" AND toInteger(line.NumberofPreviousNames)>0 THEN [1] ELSE [] END|
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName1 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany1:PreviousCompany{name:line.CompanyPreviousName1,StartofTenure:line.StartDateofPreviousName1, EndofTenure:line.EndDateofPreviousName1})
+MERGE (previousaddress1:Address{address:line.PrevAddress1,starttenure:line.StartofTenureAddress1,endtenure:line.EndofTenureAddress1})
+MERGE (previousaddress1)-[:PREVIOUSNAME]->(previouscompany1)
+)
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName2 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany2:PreviousCompany{name:line.CompanyPreviousName2,StartofTenure:line.StartDateofPreviousName2, EndofTenure:line.EndDateofPreviousName2})
+MERGE (previousaddress2:Address{address:line.PrevAddress2,starttenure:line.StartofTenureAddress2,endtenure:line.EndofTenureAddress2})
+MERGE (previousaddress2)-[:PREVIOUSNAME]->(previouscompany2)
+)
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName3 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany3:PreviousCompany{name:line.CompanyPreviousName3,StartofTenure:line.StartDateofPreviousName3, EndofTenure:line.EndDateofPreviousName3})
+MERGE (previousaddress3:Address{address:line.PrevAddress3,starttenure:line.StartofTenureAddress3,endtenure:line.EndofTenureAddress3})
+MERGE (previousaddress3)-[:PREVIOUSNAME]->(previouscompany3)
+)
+)
+FOREACH (ignoreMe IN CASE WHEN line.ChangeInRegisteredAddress= "No" AND toInteger(line.NumberofPreviousNames)>0 THEN [1] ELSE [] END|
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName1 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany1:PreviousCompany{name:line.CompanyPreviousName1,StartofTenure:line.StartDateofPreviousName1, EndofTenure:line.EndDateofPreviousName1})
+MERGE (company)-[:PREVIOUSNAME]->(previouscompany1)
+)
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName2 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany2:PreviousCompany{name:line.CompanyPreviousName2,StartofTenure:line.StartDateofPreviousName2, EndofTenure:line.EndDateofPreviousName2})
+MERGE (company)-[:PREVIOUSNAME]->(previouscompany2)
+)
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName3 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany3:PreviousCompany{name:line.CompanyPreviousName3,StartofTenure:line.StartDateofPreviousName3, EndofTenure:line.EndDateofPreviousName3})
+MERGE (company)-[:PREVIOUSNAME]->(previouscompany3)
+)
+FOREACH (ignoreMe IN CASE WHEN line.CompanyPreviousName4 <> "NA" THEN [1] ELSE [] END|
+MERGE (previouscompany4:PreviousCompany{name:line.CompanyPreviousName4,StartofTenure:line.StartDateofPreviousName4, EndofTenure:line.EndDateofPreviousName4})
+MERGE (company)-[:PREVIOUSNAME]->(previouscompany4)
+)
+)
+FOREACH (ignoreMe IN CASE WHEN line.TotalNumberofExecutives<>0 THEN [1] ELSE [] END|
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive1 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive1:Executive{name:line.NameofExecutive1,identificationnumber:line.IdentificationNumberofExecutive1,dob:line.DateofBirthofExecutive1,executiveaddress:line.AddressofExecutive1,position:line.PositionofExecutive1,tenurestart:line.StartDateofExecutive1sTenure,tenureend:line.EndDateofExecutive1sTenure,nationality:line.NationalityofExecutive1,fsiranking:line.Executive1sNationsFSIRanking,appointments:line.AppointmentsofExecutive1,sanctioncheck:line.PEPandSanctionCheckMatches1})
+MERGE (company)-[:EXECUTIVE]->(executive1)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive2 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive2:Executive{name:line.NameofExecutive2,identificationnumber:line.IdentificationNumberofExecutive2,dob:line.DateofBirthofExecutive2,executiveaddress:line.AddressofExecutive2,position:line.PositionofExecutive2,tenurestart:line.StartDateofExecutive2sTenure,tenureend:line.EndDateofExecutive2sTenure,nationality:line.NationalityofExecutive2,fsiranking:line.Executive2sNationsFSIRanking,appointments:line.AppointmentsofExecutive2,sanctioncheck:line.PEPandSanctionCheckMatches2})
+MERGE (company)-[:EXECUTIVE]->(executive2)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive3 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive3:Executive{name:line.NameofExecutive3,identificationnumber:line.IdentificationNumberofExecutive3,dob:line.DateofBirthofExecutive3,executiveaddress:line.AddressofExecutive3,position:line.PositionofExecutive3,tenurestart:line.StartDateofExecutive3sTenure,tenureend:line.EndDateofExecutive3sTenure,nationality:line.NationalityofExecutive3,fsiranking:line.Executive3sNationsFSIRanking,appointments:line.AppointmentsofExecutive3,sanctioncheck:line.PEPandSanctionCheckMatches3})
+MERGE (company)-[:EXECUTIVE]->(executive3)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive4 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive4:Executive{name:line.NameofExecutive4,identificationnumber:line.IdentificationNumberofExecutive4,dob:line.DateofBirthofExecutive4,executiveaddress:line.AddressofExecutive4,position:line.PositionofExecutive4,tenurestart:line.StartDateofExecutive4sTenure,tenureend:line.EndDateofExecutive4sTenure,nationality:line.NationalityofExecutive4,fsiranking:line.Executive4sNationsFSIRanking,appointments:line.AppointmentsofExecutive4,sanctioncheck:line.PEPandSanctionCheckMatches4})
+MERGE (company)-[:EXECUTIVE]->(executive4)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive5 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive5:Executive{name:line.NameofExecutive5,identificationnumber:line.IdentificationNumberofExecutive5,dob:line.DateofBirthofExecutive5,executiveaddress:line.AddressofExecutive5,position:line.PositionofExecutive5,tenurestart:line.StartDateofExecutive5sTenure,tenureend:line.EndDateofExecutive5sTenure,nationality:line.NationalityofExecutive5,fsiranking:line.Executive5sNationsFSIRanking,appointments:line.AppointmentsofExecutive5,sanctioncheck:line.PEPandSanctionCheckMatches5})
+MERGE (company)-[:EXECUTIVE]->(executive5)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive6 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive6:Executive{name:line.NameofExecutive6,identificationnumber:line.IdentificationNumberofExecutive6,dob:line.DateofBirthofExecutive6,executiveaddress:line.AddressofExecutive6,position:line.PositionofExecutive6,tenurestart:line.StartDateofExecutive6sTenure,tenureend:line.EndDateofExecutive6sTenure,nationality:line.NationalityofExecutive6,fsiranking:line.Executive6sNationsFSIRanking,appointments:line.AppointmentsofExecutive6,sanctioncheck:line.PEPandSanctionCheckMatches6})
+MERGE (company)-[:EXECUTIVE]->(executive6)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive7 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive7:Executive{name:line.NameofExecutive7,identificationnumber:line.IdentificationNumberofExecutive7,dob:line.DateofBirthofExecutive7,executiveaddress:line.AddressofExecutive7,position:line.PositionofExecutive7,tenurestart:line.StartDateofExecutive7sTenure,tenureend:line.EndDateofExecutive7sTenure,nationality:line.NationalityofExecutive7,fsiranking:line.Executive7sNationsFSIRanking,appointments:line.AppointmentsofExecutive7,sanctioncheck:line.PEPandSanctionCheckMatches7})
+MERGE (company)-[:EXECUTIVE]->(executive7)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive8 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive8:Executive{name:line.NameofExecutive8,identificationnumber:line.IdentificationNumberofExecutive8,dob:line.DateofBirthofExecutive8,executiveaddress:line.AddressofExecutive8,position:line.PositionofExecutive8,tenurestart:line.StartDateofExecutive8sTenure,tenureend:line.EndDateofExecutive8sTenure,nationality:line.NationalityofExecutive8,fsiranking:line.Executive8sNationsFSIRanking,appointments:line.AppointmentsofExecutive8,sanctioncheck:line.PEPandSanctionCheckMatches8})
+MERGE (company)-[:EXECUTIVE]->(executive8)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive9 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive9:Executive{name:line.NameofExecutive9,identificationnumber:line.IdentificationNumberofExecutive9,dob:line.DateofBirthofExecutive9,executiveaddress:line.AddressofExecutive9,position:line.PositionofExecutive9,tenurestart:line.StartDateofExecutive9sTenure,tenureend:line.EndDateofExecutive9sTenure,nationality:line.NationalityofExecutive9,fsiranking:line.Executive9sNationsFSIRanking,appointments:line.AppointmentsofExecutive9,sanctioncheck:line.PEPandSanctionCheckMatches9})
+MERGE (company)-[:EXECUTIVE]->(executive9)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive10 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive10:Executive{name:line.NameofExecutive10,identificationnumber:line.IdentificationNumberofExecutive10,dob:line.DateofBirthofExecutive10,executiveaddress:line.AddressofExecutive10,position:line.PositionofExecutive10,tenurestart:line.StartDateofExecutive10sTenure,tenureend:line.EndDateofExecutive10sTenure,nationality:line.NationalityofExecutive10,fsiranking:line.Executive10sNationsFSIRanking,appointments:line.AppointmentsofExecutive10,sanctioncheck:line.PEPandSanctionCheckMatches10})
+MERGE (company)-[:EXECUTIVE]->(executive10)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive10 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive10:Executive{name:line.NameofExecutive10,identificationnumber:line.IdentificationNumberofExecutive10,dob:line.DateofBirthofExecutive10,executiveaddress:line.AddressofExecutive10,position:line.PositionofExecutive10,tenurestart:line.StartDateofExecutive10sTenure,tenureend:line.EndDateofExecutive10sTenure,nationality:line.NationalityofExecutive10,fsiranking:line.Executive10sNationsFSIRanking,appointments:line.AppointmentsofExecutive10,sanctioncheck:line.PEPandSanctionCheckMatches10})
+MERGE (company)-[:EXECUTIVE]->(executive10)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive11 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive11:Executive{name:line.NameofExecutive11,identificationnumber:line.IdentificationNumberofExecutive11,dob:line.DateofBirthofExecutive11,executiveaddress:line.AddressofExecutive11,position:line.PositionofExecutive11,tenurestart:line.StartDateofExecutive11sTenure,tenureend:line.EndDateofExecutive11sTenure,nationality:line.NationalityofExecutive11,fsiranking:line.Executive11sNationsFSIRanking,appointments:line.AppointmentsofExecutive11,sanctioncheck:line.PEPandSanctionCheckMatches11})
+MERGE (company)-[:EXECUTIVE]->(executive11)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive12 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive12:Executive{name:line.NameofExecutive12,identificationnumber:line.IdentificationNumberofExecutive12,dob:line.DateofBirthofExecutive12,executiveaddress:line.AddressofExecutive12,position:line.PositionofExecutive12,tenurestart:line.StartDateofExecutive12sTenure,tenureend:line.EndDateofExecutive12sTenure,nationality:line.NationalityofExecutive12,fsiranking:line.Executive12sNationsFSIRanking,appointments:line.AppointmentsofExecutive12,sanctioncheck:line.PEPandSanctionCheckMatches12})
+MERGE (company)-[:EXECUTIVE]->(executive12)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive13 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive13:Executive{name:line.NameofExecutive13,identificationnumber:line.IdentificationNumberofExecutive13,dob:line.DateofBirthofExecutive13,executiveaddress:line.AddressofExecutive13,position:line.PositionofExecutive13,tenurestart:line.StartDateofExecutive13sTenure,tenureend:line.EndDateofExecutive13sTenure,nationality:line.NationalityofExecutive13,fsiranking:line.Executive13sNationsFSIRanking,appointments:line.AppointmentsofExecutive13,sanctioncheck:line.PEPandSanctionCheckMatches13})
+MERGE (company)-[:EXECUTIVE]->(executive13)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive14 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive14:Executive{name:line.NameofExecutive14,identificationnumber:line.IdentificationNumberofExecutive14,dob:line.DateofBirthofExecutive14,executiveaddress:line.AddressofExecutive14,position:line.PositionofExecutive14,tenurestart:line.StartDateofExecutive14sTenure,tenureend:line.EndDateofExecutive14sTenure,nationality:line.NationalityofExecutive14,fsiranking:line.Executive14sNationsFSIRanking,appointments:line.AppointmentsofExecutive14,sanctioncheck:line.PEPandSanctionCheckMatches14})
+MERGE (company)-[:EXECUTIVE]->(executive14)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive15 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive15:Executive{name:line.NameofExecutive15,identificationnumber:line.IdentificationNumberofExecutive15,dob:line.DateofBirthofExecutive15,executiveaddress:line.AddressofExecutive15,position:line.PositionofExecutive15,tenurestart:line.StartDateofExecutive15sTenure,tenureend:line.EndDateofExecutive15sTenure,nationality:line.NationalityofExecutive15,fsiranking:line.Executive15sNationsFSIRanking,appointments:line.AppointmentsofExecutive15,sanctioncheck:line.PEPandSanctionCheckMatches15})
+MERGE (company)-[:EXECUTIVE]->(executive15)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive16 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive16:Executive{name:line.NameofExecutive16,identificationnumber:line.IdentificationNumberofExecutive16,dob:line.DateofBirthofExecutive16,executiveaddress:line.AddressofExecutive16,position:line.PositionofExecutive16,tenurestart:line.StartDateofExecutive16sTenure,tenureend:line.EndDateofExecutive16sTenure,nationality:line.NationalityofExecutive16,fsiranking:line.Executive16sNationsFSIRanking,appointments:line.AppointmentsofExecutive16,sanctioncheck:line.PEPandSanctionCheckMatches16})
+MERGE (company)-[:EXECUTIVE]->(executive16)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive17 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive17:Executive{name:line.NameofExecutive17,identificationnumber:line.IdentificationNumberofExecutive17,dob:line.DateofBirthofExecutive17,executiveaddress:line.AddressofExecutive17,position:line.PositionofExecutive17,tenurestart:line.StartDateofExecutive17sTenure,tenureend:line.EndDateofExecutive17sTenure,nationality:line.NationalityofExecutive17,fsiranking:line.Executive17sNationsFSIRanking,appointments:line.AppointmentsofExecutive17,sanctioncheck:line.PEPandSanctionCheckMatches17})
+MERGE (company)-[:EXECUTIVE]->(executive17)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive18 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive18:Executive{name:line.NameofExecutive18,identificationnumber:line.IdentificationNumberofExecutive18,dob:line.DateofBirthofExecutive18,executiveaddress:line.AddressofExecutive18,position:line.PositionofExecutive18,tenurestart:line.StartDateofExecutive18sTenure,tenureend:line.EndDateofExecutive18sTenure,nationality:line.NationalityofExecutive18,fsiranking:line.Executive18sNationsFSIRanking,appointments:line.AppointmentsofExecutive18,sanctioncheck:line.PEPandSanctionCheckMatches18})
+MERGE (company)-[:EXECUTIVE]->(executive18)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive19 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive19:Executive{name:line.NameofExecutive19,identificationnumber:line.IdentificationNumberofExecutive19,dob:line.DateofBirthofExecutive19,executiveaddress:line.AddressofExecutive19,position:line.PositionofExecutive19,tenurestart:line.StartDateofExecutive19sTenure,tenureend:line.EndDateofExecutive19sTenure,nationality:line.NationalityofExecutive19,fsiranking:line.Executive19sNationsFSIRanking,appointments:line.AppointmentsofExecutive19,sanctioncheck:line.PEPandSanctionCheckMatches19})
+MERGE (company)-[:EXECUTIVE]->(executive19)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive20 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive20:Executive{name:line.NameofExecutive20,identificationnumber:line.IdentificationNumberofExecutive20,dob:line.DateofBirthofExecutive20,executiveaddress:line.AddressofExecutive20,position:line.PositionofExecutive20,tenurestart:line.StartDateofExecutive20sTenure,tenureend:line.EndDateofExecutive20sTenure,nationality:line.NationalityofExecutive20,fsiranking:line.Executive20sNationsFSIRanking,appointments:line.AppointmentsofExecutive20,sanctioncheck:line.PEPandSanctionCheckMatches20})
+MERGE (company)-[:EXECUTIVE]->(executive20)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive21 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive21:Executive{name:line.NameofExecutive21,identificationnumber:line.IdentificationNumberofExecutive21,dob:line.DateofBirthofExecutive21,executiveaddress:line.AddressofExecutive21,position:line.PositionofExecutive21,tenurestart:line.StartDateofExecutive21sTenure,tenureend:line.EndDateofExecutive21sTenure,nationality:line.NationalityofExecutive21,fsiranking:line.Executive21sNationsFSIRanking,appointments:line.AppointmentsofExecutive21,sanctioncheck:line.PEPandSanctionCheckMatches21})
+MERGE (company)-[:EXECUTIVE]->(executive21)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive22 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive22:Executive{name:line.NameofExecutive22,identificationnumber:line.IdentificationNumberofExecutive22,dob:line.DateofBirthofExecutive22,executiveaddress:line.AddressofExecutive22,position:line.PositionofExecutive22,tenurestart:line.StartDateofExecutive22sTenure,tenureend:line.EndDateofExecutive22sTenure,nationality:line.NationalityofExecutive22,fsiranking:line.Executive22sNationsFSIRanking,appointments:line.AppointmentsofExecutive22,sanctioncheck:line.PEPandSanctionCheckMatches22})
+MERGE (company)-[:EXECUTIVE]->(executive22)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive23 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive23:Executive{name:line.NameofExecutive23,identificationnumber:line.IdentificationNumberofExecutive23,dob:line.DateofBirthofExecutive23,executiveaddress:line.AddressofExecutive23,position:line.PositionofExecutive23,tenurestart:line.StartDateofExecutive23sTenure,tenureend:line.EndDateofExecutive23sTenure,nationality:line.NationalityofExecutive23,fsiranking:line.Executive23sNationsFSIRanking,appointments:line.AppointmentsofExecutive23,sanctioncheck:line.PEPandSanctionCheckMatches23})
+MERGE (company)-[:EXECUTIVE]->(executive23)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive24 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive24:Executive{name:line.NameofExecutive24,identificationnumber:line.IdentificationNumberofExecutive24,dob:line.DateofBirthofExecutive24,executiveaddress:line.AddressofExecutive24,position:line.PositionofExecutive24,tenurestart:line.StartDateofExecutive24sTenure,tenureend:line.EndDateofExecutive24sTenure,nationality:line.NationalityofExecutive24,fsiranking:line.Executive24sNationsFSIRanking,appointments:line.AppointmentsofExecutive24,sanctioncheck:line.PEPandSanctionCheckMatches24})
+MERGE (company)-[:EXECUTIVE]->(executive24)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive25 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive25:Executive{name:line.NameofExecutive25,identificationnumber:line.IdentificationNumberofExecutive25,dob:line.DateofBirthofExecutive25,executiveaddress:line.AddressofExecutive25,position:line.PositionofExecutive25,tenurestart:line.StartDateofExecutive25sTenure,tenureend:line.EndDateofExecutive25sTenure,nationality:line.NationalityofExecutive25,fsiranking:line.Executive25sNationsFSIRanking,appointments:line.AppointmentsofExecutive25,sanctioncheck:line.PEPandSanctionCheckMatches25})
+MERGE (company)-[:EXECUTIVE]->(executive25)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive26 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive26:Executive{name:line.NameofExecutive26,identificationnumber:line.IdentificationNumberofExecutive26,dob:line.DateofBirthofExecutive26,executiveaddress:line.AddressofExecutive26,position:line.PositionofExecutive26,tenurestart:line.StartDateofExecutive26sTenure,tenureend:line.EndDateofExecutive26sTenure,nationality:line.NationalityofExecutive26,fsiranking:line.Executive26sNationsFSIRanking,appointments:line.AppointmentsofExecutive26,sanctioncheck:line.PEPandSanctionCheckMatches26})
+MERGE (company)-[:EXECUTIVE]->(executive26)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive27 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive27:Executive{name:line.NameofExecutive27,identificationnumber:line.IdentificationNumberofExecutive27,dob:line.DateofBirthofExecutive27,executiveaddress:line.AddressofExecutive27,position:line.PositionofExecutive27,tenurestart:line.StartDateofExecutive27sTenure,tenureend:line.EndDateofExecutive27sTenure,nationality:line.NationalityofExecutive27,fsiranking:line.Executive27sNationsFSIRanking,appointments:line.AppointmentsofExecutive27,sanctioncheck:line.PEPandSanctionCheckMatches27})
+MERGE (company)-[:EXECUTIVE]->(executive27)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive28 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive28:Executive{name:line.NameofExecutive28,identificationnumber:line.IdentificationNumberofExecutive28,dob:line.DateofBirthofExecutive28,executiveaddress:line.AddressofExecutive28,position:line.PositionofExecutive28,tenurestart:line.StartDateofExecutive28sTenure,tenureend:line.EndDateofExecutive28sTenure,nationality:line.NationalityofExecutive28,fsiranking:line.Executive28sNationsFSIRanking,appointments:line.AppointmentsofExecutive28,sanctioncheck:line.PEPandSanctionCheckMatches28})
+MERGE (company)-[:EXECUTIVE]->(executive28)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive29 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive29:Executive{name:line.NameofExecutive29,identificationnumber:line.IdentificationNumberofExecutive29,dob:line.DateofBirthofExecutive29,executiveaddress:line.AddressofExecutive29,position:line.PositionofExecutive29,tenurestart:line.StartDateofExecutive29sTenure,tenureend:line.EndDateofExecutive29sTenure,nationality:line.NationalityofExecutive29,fsiranking:line.Executive29sNationsFSIRanking,appointments:line.AppointmentsofExecutive29,sanctioncheck:line.PEPandSanctionCheckMatches29})
+MERGE (company)-[:EXECUTIVE]->(executive29)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive30 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive30:Executive{name:line.NameofExecutive30,identificationnumber:line.IdentificationNumberofExecutive30,dob:line.DateofBirthofExecutive30,executiveaddress:line.AddressofExecutive30,position:line.PositionofExecutive30,tenurestart:line.StartDateofExecutive30sTenure,tenureend:line.EndDateofExecutive30sTenure,nationality:line.NationalityofExecutive30,fsiranking:line.Executive30sNationsFSIRanking,appointments:line.AppointmentsofExecutive30,sanctioncheck:line.PEPandSanctionCheckMatches30})
+MERGE (company)-[:EXECUTIVE]->(executive30)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive31 <> "NA" THEN [1] ELSE [] END|
+MERGE (executive31:Executive{name:line.NameofExecutive31,identificationnumber:line.IdentificationNumberofExecutive31,dob:line.DateofBirthofExecutive31,executiveaddress:line.AddressofExecutive31,position:line.PositionofExecutive31,tenurestart:line.StartDateofExecutive31sTenure,tenureend:line.EndDateofExecutive31sTenure,nationality:line.NationalityofExecutive31,fsiranking:line.Executive31sNationsFSIRanking,appointments:line.AppointmentsofExecutive31,sanctioncheck:line.PEPandSanctionCheckMatches31})
+MERGE (company)-[:EXECUTIVE]->(executive31)
+)
+FOREACH (ignoreMe IN CASE WHEN line.NameofExecutive32> "NA" THEN [1] ELSE [] END|
+MERGE (executive32:Executive{name:line.NameofExecutive32,identificationnumber:line.IdentificationNumberofExecutive32,dob:line.DateofBirthofExecutive32,executiveaddress:line.AddressofExecutive32,position:line.PositionofExecutive32,tenurestart:line.StartDateofExecutive32sTenure,tenureend:line.EndDateofExecutive32sTenure,nationality:line.NationalityofExecutive32,fsiranking:line.Executive32sNationsFSIRanking,appointments:line.AppointmentsofExecutive32,sanctioncheck:line.PEPandSanctionCheckMatches32})
+MERGE (company)-[:EXECUTIVE]->(executive32)
+)
+)
+FOREACH(ignoreMe IN CASE WHEN line.NumberofBeneficialOwners <>0 THEN [1] ELSE [] END | 
+FOREACH(ignoreMe IN CASE WHEN line.UltimateBeneficialOwner1 <> "NA" THEN [1] ELSE [] END | 
+MERGE (uob1:UltimateBeneficialOwner{name:line.UltimateBeneficialOwner1, sanctioncheck:line.PEPandSanctionCheckMatchforOwner1})
+MERGE (company)-[:OWNER]->(uob1)
+)
+FOREACH(ignoreMe IN CASE WHEN line.UltimateBeneficialOwner2 <> "NA" THEN [1] ELSE [] END | 
+MERGE (uob2:UltimateBeneficialOwner{name:line.UltimateBeneficialOwner2, sanctioncheck:line.PEPandSanctionCheckMatchforOwner2})
+MERGE (company)-[:OWNER]->(uob2)
+)
+FOREACH(ignoreMe IN CASE WHEN line.UltimateBeneficialOwner3 <> "NA" THEN [1] ELSE [] END | 
+MERGE (uob3:UltimateBeneficialOwner{name:line.UltimateBeneficialOwner3, sanctioncheck:line.PEPandSanctionCheckMatchforOwner3})
+MERGE (company)-[:OWNER]->(uob3)
+)
+FOREACH(ignoreMe IN CASE WHEN line.UltimateBeneficialOwner4 <> "NA" THEN [1] ELSE [] END | 
+MERGE (uob4:UltimateBeneficialOwner{name:line.UltimateBeneficialOwner4, sanctioncheck:line.PEPandSanctionCheckMatchforOwner4})
+MERGE (company)-[:OWNER]->(uob4)
+)
+);
+MATCH (c:Company)-[:PREVIOUSADDRESS]->(a:Address)-[]->(p:PreviousCompany)
+WHERE c.companypreviousnames <> "NA"
+WITH c, p
+MATCH (c)-[:EXECUTIVE]->(e:Executive)
+WHERE e.tenureend <> "NA" AND
+e.tenurestart >= p.StartofTenure AND e.tenureend <= p.EndofTenure
+MERGE (e)-[:PREVEXEC]->(p)
+RETURN c, e, p

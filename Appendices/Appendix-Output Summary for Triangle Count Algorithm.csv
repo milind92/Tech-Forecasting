@@ -1,0 +1,2 @@
+﻿loadMillis,computeMillis,writeMillis,postProcessingMillis,nodeCount,triangleCount,averageClusteringCoefficient,p1,p5,p10,p25,p50,p75,p90,p95,p99,p100,write,writeProperty,clusteringCoefficientProperty
+10,3,4,16,2389,2900,0.0689725328655064,0,0,0,0,0,0,1,10,131,163,true,trianglesCount,clusteringCoefficient
